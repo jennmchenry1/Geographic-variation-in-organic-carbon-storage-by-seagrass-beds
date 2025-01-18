@@ -1,0 +1,155 @@
+---
+title: "Main Manuscript Figures"
+author: "Jenn_McHenry"
+date: "01/17/2025"
+output: html_document
+---
+
+# Script Purpose
+
+This script was written with the intention of recreating the three main figures presented in McHenry, Jennifer, et al. "Geographic variation in organic carbon storage by seagrass beds." Limnology and Oceanography 68.6 (2023): 1256-1268.
+
+# Library calls and functions
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+ 
+# install.packages(c(""utils","mgcv","pROC","tools","dplyr","ggplot2","nlme","doBy","plyr","MuMIn","raster","nnet","doParallel","gratia","vip","pdp","ggpubr","RColorBrewer","sf","ggsn""))
+
+library(tidyverse)
+library(RColorBrewer)
+library(mgcv)
+library(tools)
+library(viridis)
+library(ggpubr)
+library(ggsn)
+library(raster)
+library(sf)
+library(dplyr)
+
+ 
+theme_Publication <- function(base_size=17, base_family="Arial") {
+      library(grid)
+      library(ggthemes)
+      (theme_foundation(base_size=base_size, base_family=base_family)
+       + theme(plot.title = element_text(face = "bold",
+                                         size = rel(1.2), hjust = 0.5),
+               text = element_text(),
+               panel.background = element_rect(colour = NA),
+               plot.background = element_rect(colour = NA),
+               panel.border = element_rect(colour = NA),
+               axis.title = element_text(face = "bold",size = rel(1)),
+               axis.title.y = element_text(angle=90,vjust =2),
+               axis.title.x = element_text(vjust = -0.2),
+               axis.text = element_text(), 
+               axis.line = element_line(colour="black"),
+               axis.ticks = element_line(),
+               panel.grid.major = element_line(colour="#f0f0f0"),
+               panel.grid.minor = element_blank(),
+               legend.key = element_rect(colour = NA),
+               legend.position = "bottom",
+               legend.direction = "horizontal",
+               legend.key.size= unit(0.2, "cm"),
+               legend.margin = unit(0, "cm"),
+               legend.title = element_text(face="italic"),
+               plot.margin=unit(c(10,5,5,5),"mm"),
+               strip.background=element_rect(colour="#f0f0f0",fill="#f0f0f0"),
+               strip.text = element_text(face="bold")
+          ))
+      
+}
+
+scale_fill_Publication <- function(...){
+      library(scales)
+      discrete_scale("fill","Publication",manual_pal(values = c("#386cb0","#fdb462","#7fc97f","#ef3b2c","#662506","#a6cee3","#fb9a99","#984ea3","#ffff33")), ...)
+}
+
+
+pal_teal_blue_purple <- rainbow(12)
+
+show_palette <- function(colors) {
+  image(1:n, 1, as.matrix(1:n), col = colors, 
+    xlab = "", ylab = "", xaxt = "n", 
+    yaxt = "n", bty = "n")
+}
+
+```
+
+
+# Figure 1b. (Boxplots of the Site Averaged Organic Carbon Stocks by Region)
+```{r}
+figure1_data = read.csv(file ="data/figure1_data.csv")
+
+fig1 <-figure1_data%>%
+  ggplot(aes(y=Avg_OrgC_stock_Mg_per_ha,x=treatment,fill=region))+ geom_boxplot()+ geom_jitter(width=0.5)+
+  ylab(bquote('Organic Carbon Stock ' (MgCorg/ha))) +
+  xlab("")+
+  ggtitle("b.") + 
+  facet_wrap(~region,ncol=4)+
+  theme_classic(base_family = "serif")+
+  theme(legend.position="none",text = element_text(size = 12))+
+  # theme_Publication()+
+  scale_fill_manual(values=pal_teal_blue_purple[c(7,8,9,11)])+ scale_x_discrete(guide = guide_axis(n.dodge = 2))
+
+
+#Saving the output
+ggsave("plots/Figure1b.pdf",  units="in", width=7, height=3.5,dpi=300)
+fig1
+dev.off()
+
+```
+
+
+# Figure 2 (Boxplots of Org C Storage values and Seagrass Cover Predicted by Models )
+```{r}
+seagrass_cutoff<-5
+
+figure2_data<-read.csv("model_output/figure_2.csv")
+
+#Average predicted C storage value 
+mean_storage<-figure2_data%>%
+  mutate(bed_type=as.factor(bed_type), bed_type=factor(bed_type,levels=c("potential restoration areas","confirmed bed"),labels=c("Potential \nRecovery Areas","Confirmed \nSeagrass Beds")))%>%
+  group_by(bed_type)%>%
+  summarize(mean=mean(predicted_Corg_storage_value_per_pixel))  
+
+#Average predicted total cover of seagrasses(%)
+mean_seagrass_cover<-figure2_data%>%
+  mutate(bed_type=as.factor(bed_type), bed_type=factor(bed_type,levels=c("potential restoration areas","confirmed bed"),labels=c("Potential \nRecovery Areas","Confirmed \nSeagrass Beds")))%>%
+  group_by(bed_type)%>%
+  summarize(mean=mean(total_predicted_seagrass_cover))
+
+
+fig2a=figure2_data%>%
+  filter(total_predicted_seagrass_cover>seagrass_cutoff)%>%
+  mutate(bed_type=as.factor(bed_type), bed_type=factor(bed_type,levels=c("potential restoration areas","confirmed bed"),labels=c("Potential \nRecovery Areas","Confirmed \nSeagrass Beds")))%>%
+  ggplot(aes(x=bed_type,y=predicted_Corg_storage_value_per_pixel,fill=bed_type))+ geom_boxplot(position="dodge")+
+  geom_point(data=mean_storage,aes(x=bed_type,y=mean),shape=8,size=5)+
+  coord_flip()+
+  ylab("")+xlab("")+
+    ylab("Carbon Storage Value")+
+  theme_classic()+
+  theme(legend.position="none" ,text = element_text(size =12))+
+  scale_fill_manual(values=pal_teal_blue_purple[c(7,8,9,11)]) +
+  ggtitle("a.")
+
+fig2b=figure2_data%>%
+  filter(total_predicted_seagrass_cover>seagrass_cutoff)%>%
+  mutate(bed_type=as.factor(bed_type), bed_type=factor(bed_type,levels=c("potential restoration areas","confirmed bed"),labels=c("Potential \nRecovery Areas","Confirmed \nSeagrass Beds")))%>%
+  ggplot(aes(x=bed_type,y=total_predicted_seagrass_cover,fill=bed_type))+ geom_boxplot(position="dodge")+
+  geom_point(data=mean_seagrass_cover,aes(x=bed_type,y=mean),shape=8,size=5)+
+  coord_flip()+
+  ylab("Total Seagrass Cover")+xlab("")+
+  theme_classic()+
+  theme(legend.position="none" ,text = element_text(size = 12))+
+  scale_fill_manual(values=pal_teal_blue_purple[c(7,8,9,11)])+
+  ggtitle("b.")
+
+
+fig2<-ggarrange(fig2a,fig2b,ncol=2)
+
+#Saving the output
+ggsave("plots/Figure2.pdf",  units="in", width=7, height=2.5, dpi=300)
+fig2
+dev.off()
+
+```
+
