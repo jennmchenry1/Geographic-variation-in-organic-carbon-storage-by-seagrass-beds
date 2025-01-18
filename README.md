@@ -11,13 +11,17 @@ File Description:
 1. Main_manuscript_figures.Rmd- Rmarkdown file (and corresponding html) with code for recreating the main figures presented in the publication.
 
 2. plots/ - Folder containing the main figures from the manuscript that were created in Rstudio.
+
    a. Figure1b - Boxplots of the Site Averaged Organic Carbon Stocks by Region
+
    b. Figure2 - Boxplots of Org C Storage values and Seagrass Cover Predicted by Models 
 
 4. data/ - Folder containing the empirical data used to create the main figures of the manuscript
+
    a. figure1.csv - Site averaged carbon stock measurements (Mg orgC per hectare, n=3) by treatment (Vegetetaed vs Unvegatated) and location (Crytal River, Steinhatchee, St. Marks, and St. Joes Bay)
    
 6. model_output/ - Folder containing the modeled data produced by this study and used to create the main figures of the manuscript.
+   
    a. figure2.csv - Predicted carbon storage value (delta Mg orgC per hectare) and total percent cover of seagrasses per pixel of confirmed seagrass beds and potential recovery areas.
 
 8. McHenry - etal LO 2023.pdf - The corresponding publication.
